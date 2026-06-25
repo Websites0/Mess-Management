@@ -1143,14 +1143,14 @@ h4 { font-size: 0.95rem; font-weight: 600; }
     </div>
 
     <!-- Date Navigation -->
-    <div class="date-nav">
+    <div class="date-nav" id="meals-date-nav">
       <button onclick="changeMealDate(-1)">◀</button>
       <div class="date-display" id="mealDateDisplay" onclick="pickMealDate()"></div>
       <button onclick="changeMealDate(1)">▶</button>
     </div>
 
     <!-- Meal Preset Hint -->
-    <div class="card" style="padding:10px 14px;">
+    <div class="card" id="meals-hint-card" style="padding:10px 14px;">
       <div class="text-xs text-muted">🌅 Breakfast = 0.5 &nbsp; 🌞 Lunch = 1 &nbsp; 🌙 Dinner = 1 &nbsp; (Default = 2.5)</div>
     </div>
 
@@ -1186,7 +1186,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
         <h2 class="section-title">🛒 Bazaar</h2>
         <div class="section-subtitle">Grocery & expense tracking</div>
       </div>
-      <button class="btn btn-sm btn-primary" onclick="populateBazaarMemberChips(null); openModal('modal-bazaar')">+ Add</button>
+      <button class="btn btn-sm btn-primary" id="bazaar-add-btn" onclick="populateBazaarMemberChips(null); openModal('modal-bazaar')">+ Add</button>
     </div>
 
     <div class="card" style="padding:10px 14px;">
@@ -1208,7 +1208,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
         <h2 class="section-title">💰 Deposits</h2>
         <div class="section-subtitle">Member money collection</div>
       </div>
-      <button class="btn btn-sm btn-primary manager-only" onclick="openModal('modal-deposit')">+ Add</button>
+      <button class="btn btn-sm btn-primary manager-only" id="deposit-add-btn" onclick="openModal('modal-deposit')">+ Add</button>
     </div>
 
     <div class="card" style="padding:10px 14px;">
@@ -1926,7 +1926,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 <script>
 // ─── CONFIGURATION ─────────────────────────────────────
 // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
-const API_URL = 'https://script.google.com/macros/s/AKfycbxF0d5mkrJe0tdE_Bv2K6375PYpHYDcQispYBb9BaRLqv_6xOGJG--8KS22cpf7_w2g/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyn1NCR4QbXajEAEtTI6WqWt57tY5Y2-H0QtjaLuNdkvA_F6wiPA5_s-snQdkXSlnED5g/exec';
 
 // ─── STATE ─────────────────────────────────────────────
 let currentUser = null;
@@ -2547,8 +2547,15 @@ async function loadMeals() {
   // Check meal lock
   if (!isMealActive) {
     document.getElementById('mealEntries').innerHTML = getMealLockOverlay();
+    document.getElementById('meals-date-nav').style.display = 'none';
+    document.getElementById('meals-hint-card').style.display = 'none';
+    document.getElementById('mealSaveBar').style.display = 'none';
     return;
   }
+  // Restore UI when unlocked
+  document.getElementById('meals-date-nav').style.display = '';
+  document.getElementById('meals-hint-card').style.display = '';
+
   if (!currentMealDate) currentMealDate = getBDDateString();
   document.getElementById('mealDateDisplay').textContent = formatDate(currentMealDate);
 
@@ -2720,12 +2727,16 @@ function populateBazaarMemberChips(selectedIds) {
 }
 
 async function loadBazaar() {
+  const addBtn = document.getElementById('bazaar-add-btn');
   // Check meal lock
   if (!isMealActive) {
     document.getElementById('bazaarList').innerHTML = getMealLockOverlay();
-    document.getElementById('bazaar-total').textContent = '৳0';
+    if (addBtn) addBtn.style.display = 'none';
     return;
   }
+  // Restore UI when unlocked
+  if (addBtn) addBtn.style.display = '';
+
   // Ensure allMembers is loaded before populating chips
   if (!allMembers.length) {
     await loadDashboard();
@@ -2841,12 +2852,15 @@ async function deleteBazaarEntry(id) {
 
 // ─── DEPOSITS ──────────────────────────────────────────
 async function loadDeposits() {
+  const addBtn = document.getElementById('deposit-add-btn');
   // Check meal lock
   if (!isMealActive) {
     document.getElementById('depositList').innerHTML = getMealLockOverlay();
-    document.getElementById('deposit-total').textContent = '৳0';
+    if (addBtn) addBtn.style.display = 'none';
     return;
   }
+  // Restore UI when unlocked (respect manager-only: only show for managers)
+  if (addBtn && currentUser?.role === 'manager') addBtn.style.display = '';
   const res = await api('getDeposits');
   if (!res.success) return;
 
@@ -3350,7 +3364,8 @@ function getMealLockOverlay() {
 function renderMealControl(settings) {
   const area = document.getElementById('mealControlArea');
   if (!area) return;
-  const active = settings.mealActive === 'true' || settings.mealActive === true;
+  // Treat undefined/missing mealActive as active (backward compat for existing users)
+  const active = settings.mealActive !== 'false' && settings.mealActive !== false;
   isMealActive = active;
 
   if (active) {
