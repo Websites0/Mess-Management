@@ -1044,6 +1044,19 @@ h4 { font-size: 0.95rem; font-weight: 600; }
       </div>
     </div>
 
+    <!-- Meal Lock Warning Banner -->
+    <div id="mealLockBanner" style="display:none;">
+      <div class="card" style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(239,68,68,0.1));border:1px solid rgba(245,158,11,0.3);padding:14px 16px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.4rem;">🔒</span>
+          <div>
+            <div style="font-weight:600;font-size:0.92rem;color:var(--warning);">Meal not started yet</div>
+            <div class="text-xs text-muted">Manager needs to start meals from ⚙️ Settings first. Meals, Bazaar, Deposits are locked.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Summary Cards -->
     <div class="summary-grid" id="summaryGrid">
       <div class="summary-card highlight">
@@ -1390,11 +1403,15 @@ h4 { font-size: 0.95rem; font-weight: 600; }
         <label class="form-label">Mess Name</label>
         <input type="text" class="form-input" id="setting-messName" placeholder="Enter mess name">
       </div>
-      <div class="form-group">
-        <label class="form-label">Meal Start Date</label>
-        <input type="date" class="form-input" id="setting-startDate">
+      <button class="btn btn-primary btn-sm" onclick="saveSettings()" style="margin-bottom:16px;">💾 Save Settings</button>
+
+      <!-- Meal Start/Stop -->
+      <div style="border-top:1px solid var(--border-color);padding-top:14px;margin-top:4px;">
+        <label class="form-label" style="margin-bottom:8px;">🍽️ Meal Control</label>
+        <div id="mealControlArea">
+          <span class="text-sm text-muted">Loading...</span>
+        </div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="saveSettings()">💾 Save Settings</button>
     </div>
 
     <!-- Members Management (Manager Only) -->
@@ -1909,7 +1926,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 <script>
 // ─── CONFIGURATION ─────────────────────────────────────
 // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
-const API_URL = 'https://script.google.com/macros/s/AKfycbw__0Kl2unFGKiTHKxrySjNHoSVJTWDVrZd-D6JYPCip7s77_wNrwWLLbaSkQPj3WG0Aw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxF0d5mkrJe0tdE_Bv2K6375PYpHYDcQispYBb9BaRLqv_6xOGJG--8KS22cpf7_w2g/exec';
 
 // ─── STATE ─────────────────────────────────────────────
 let currentUser = null;
@@ -1922,6 +1939,7 @@ let currentPastMonthId = null;
 let ledgerType = 'income';
 let pendingMealChanges = {};   // { memberId: newCount } — deferred meal save
 let isFirstVisit = !localStorage.getItem('messOnboardingDone');
+let isMealActive = false;
 
 // ─── BD TIMEZONE HELPER ────────────────────────────────
 function getBDDate() {
@@ -2416,6 +2434,11 @@ async function loadDashboard() {
 
   dashboardData = res.dashboard;
   allMembers = dashboardData.members || [];
+  isMealActive = dashboardData.mealActive || false;
+
+  // Show/hide meal lock banner
+  const lockBanner = document.getElementById('mealLockBanner');
+  if (lockBanner) lockBanner.style.display = isMealActive ? 'none' : 'block';
 
   // Update header
   document.getElementById('headerTitle').textContent = dashboardData.messName || 'Mess Manager';
@@ -2521,6 +2544,11 @@ async function loadDashboardElection() {
 
 // ─── MEALS ─────────────────────────────────────────────
 async function loadMeals() {
+  // Check meal lock
+  if (!isMealActive) {
+    document.getElementById('mealEntries').innerHTML = getMealLockOverlay();
+    return;
+  }
   if (!currentMealDate) currentMealDate = getBDDateString();
   document.getElementById('mealDateDisplay').textContent = formatDate(currentMealDate);
 
@@ -2692,6 +2720,12 @@ function populateBazaarMemberChips(selectedIds) {
 }
 
 async function loadBazaar() {
+  // Check meal lock
+  if (!isMealActive) {
+    document.getElementById('bazaarList').innerHTML = getMealLockOverlay();
+    document.getElementById('bazaar-total').textContent = '৳0';
+    return;
+  }
   // Ensure allMembers is loaded before populating chips
   if (!allMembers.length) {
     await loadDashboard();
@@ -2807,6 +2841,12 @@ async function deleteBazaarEntry(id) {
 
 // ─── DEPOSITS ──────────────────────────────────────────
 async function loadDeposits() {
+  // Check meal lock
+  if (!isMealActive) {
+    document.getElementById('depositList').innerHTML = getMealLockOverlay();
+    document.getElementById('deposit-total').textContent = '৳0';
+    return;
+  }
   const res = await api('getDeposits');
   if (!res.success) return;
 
@@ -3255,7 +3295,8 @@ async function loadSettings() {
   const res = await api('getSettings');
   if (res.success && res.settings) {
     document.getElementById('setting-messName').value = res.settings.messName || '';
-    document.getElementById('setting-startDate').value = res.settings.mealStartDate || '';
+    // Render meal control area
+    renderMealControl(res.settings);
   }
 
   // Member list for settings
@@ -3280,15 +3321,102 @@ async function loadSettings() {
 
 async function saveSettings() {
   const messName = document.getElementById('setting-messName').value.trim();
-  const startDate = document.getElementById('setting-startDate').value;
 
   showLoading('Saving...');
   if (messName) await api('updateSettings', { key: 'messName', value: messName, requesterId: currentUser.id });
-  if (startDate) await api('updateSettings', { key: 'mealStartDate', value: startDate, requesterId: currentUser.id });
   hideLoading();
 
   showToast('Settings saved', 'success');
   document.getElementById('headerTitle').textContent = messName || 'Mess Manager';
+}
+
+// ─── MEAL LOCK HELPERS ────────────────────────────────
+function getMealLockOverlay() {
+  return `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:48px 20px;text-align:center;">
+      <div style="font-size:3rem;margin-bottom:12px;opacity:0.7;
+        animation:pulse 2s ease-in-out infinite;">🔒</div>
+      <div style="font-weight:700;font-size:1.1rem;color:var(--text-primary);margin-bottom:6px;">
+        Meal has not started yet
+      </div>
+      <div class="text-sm text-muted" style="max-width:280px;line-height:1.5;">
+        Manager needs to start meals from<br>
+        <strong>⚙️ Settings → 🍽️ Meal Control</strong> first.
+      </div>
+    </div>`;
+}
+
+function renderMealControl(settings) {
+  const area = document.getElementById('mealControlArea');
+  if (!area) return;
+  const active = settings.mealActive === 'true' || settings.mealActive === true;
+  isMealActive = active;
+
+  if (active) {
+    const startDate = settings.mealStartDate || '';
+    area.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;
+          box-shadow:0 0 8px rgba(34,197,94,0.5);animation:pulse 2s ease-in-out infinite;"></span>
+        <span style="font-weight:600;color:#22c55e;font-size:0.92rem;">Meals Active</span>
+      </div>
+      ${startDate ? `<div class="text-xs text-muted" style="margin-bottom:12px;">📅 Started: ${startDate}</div>` : ''}
+      <button class="btn btn-danger btn-block" onclick="stopMealAction()">
+        🔴 Stop Meal
+      </button>
+      <div class="text-xs text-muted" style="margin-top:6px;text-align:center;">Stopping will lock all Meals, Bazaar & Deposits.</div>`;
+  } else {
+    const endDate = settings.mealEndDate || '';
+    area.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;
+          box-shadow:0 0 8px rgba(239,68,68,0.4);"></span>
+        <span style="font-weight:600;color:#ef4444;font-size:0.92rem;">Meals Not Started</span>
+      </div>
+      ${endDate ? `<div class="text-xs text-muted" style="margin-bottom:12px;">📅 Last stopped: ${endDate}</div>` : ''}
+      <button class="btn btn-block" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;
+        border:none;font-weight:700;font-size:0.95rem;" onclick="startMealAction()">
+        🟢 Start Meal
+      </button>
+      <div class="text-xs text-muted" style="margin-top:6px;text-align:center;">Current BD date & time will be saved automatically.</div>`;
+  }
+}
+
+async function startMealAction() {
+  const ok = await showConfirm('Start Meal', 'Start meals now? Current BD date & time will be saved. All operations (Meals, Bazaar, Deposits) will be unlocked.', '🟢');
+  if (!ok) return;
+  showLoading('Starting meals...');
+  const res = await api('startMeal', { requesterId: currentUser.id });
+  hideLoading();
+  if (res.success) {
+    isMealActive = true;
+    showToast('🟢 Meals started! All features unlocked.', 'success');
+    loadSettings();
+    // Update dashboard banner
+    const lockBanner = document.getElementById('mealLockBanner');
+    if (lockBanner) lockBanner.style.display = 'none';
+  } else {
+    showToast(res.error || 'Failed to start meals', 'error');
+  }
+}
+
+async function stopMealAction() {
+  const ok = await showConfirm('Stop Meal', 'Stop meals? Current BD date & time will be saved. All operations (Meals, Bazaar, Deposits) will be locked.', '🔴');
+  if (!ok) return;
+  showLoading('Stopping meals...');
+  const res = await api('stopMeal', { requesterId: currentUser.id });
+  hideLoading();
+  if (res.success) {
+    isMealActive = false;
+    showToast('🔴 Meals stopped. All features locked.', 'info');
+    loadSettings();
+    // Update dashboard banner
+    const lockBanner = document.getElementById('mealLockBanner');
+    if (lockBanner) lockBanner.style.display = 'block';
+  } else {
+    showToast(res.error || 'Failed to stop meals', 'error');
+  }
 }
 
 // ─── MONTH MANAGEMENT ─────────────────────────────────
