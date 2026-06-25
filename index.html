@@ -302,6 +302,104 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 }
 .summary-card.highlight .sc-label { color: rgba(255,255,255,0.8); }
 
+/* BD Clock Widget */
+.bd-clock-widget {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  animation: slideUp 0.3s ease both;
+}
+.bd-clock-widget::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.bd-clock-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.bd-clock-content {
+  flex: 1;
+  min-width: 0;
+}
+.bd-clock-time {
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.bd-clock-time .clock-hm {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.bd-clock-time .clock-sec {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 26px;
+}
+.bd-clock-time .clock-ampm {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  margin-left: 2px;
+  text-transform: uppercase;
+}
+.bd-clock-date {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bd-clock-date .clock-flag {
+  font-size: 0.85rem;
+}
+.bd-clock-sec-ring {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  position: relative;
+}
+.bd-clock-sec-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.bd-clock-sec-ring .ring-bg {
+  fill: none;
+  stroke: var(--border-color);
+  stroke-width: 3;
+}
+.bd-clock-sec-ring .ring-fg {
+  fill: none;
+  stroke: url(#clockGradient);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 113.1;
+  stroke-dashoffset: 113.1;
+  transition: stroke-dashoffset 0.3s ease;
+}
+
 /* Member Cards */
 .member-card {
   background: var(--bg-card);
@@ -916,6 +1014,34 @@ h4 { font-size: 0.95rem; font-weight: 600; }
         <div class="section-subtitle" id="dashboardDate"></div>
       </div>
       <button class="btn btn-sm btn-secondary" onclick="loadDashboard()">🔄</button>
+    </div>
+
+    <!-- BD Live Clock -->
+    <div class="bd-clock-widget" id="bdClockWidget">
+      <div class="bd-clock-icon">🕐</div>
+      <div class="bd-clock-content">
+        <div class="bd-clock-time">
+          <span class="clock-hm" id="clockHM">--:--</span>
+          <span class="clock-sec" id="clockSec">00</span>
+          <span class="clock-ampm" id="clockAMPM">--</span>
+        </div>
+        <div class="bd-clock-date">
+          <span class="clock-flag">🇧🇩</span>
+          <span id="clockDateLabel">Bangladesh Standard Time (BST)</span>
+        </div>
+      </div>
+      <div class="bd-clock-sec-ring">
+        <svg viewBox="0 0 40 40">
+          <defs>
+            <linearGradient id="clockGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#06b6d4"/>
+              <stop offset="100%" stop-color="#8b5cf6"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="20" cy="20" r="18"/>
+          <circle class="ring-fg" id="clockSecRing" cx="20" cy="20" r="18"/>
+        </svg>
+      </div>
     </div>
 
     <!-- Summary Cards -->
@@ -1783,7 +1909,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 <script>
 // ─── CONFIGURATION ─────────────────────────────────────
 // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
-const API_URL = 'https://script.google.com/macros/s/AKfycbwfrSL9LbnRJJZNlbuZxVfsi8I8Z8ggdb9U-OjZjcjsiMK3ck0l9N4-0jG1wt0yV8DKuQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbw__0Kl2unFGKiTHKxrySjNHoSVJTWDVrZd-D6JYPCip7s77_wNrwWLLbaSkQPj3WG0Aw/exec';
 
 // ─── STATE ─────────────────────────────────────────────
 let currentUser = null;
@@ -1827,6 +1953,71 @@ function timeAgo(dtStr) {
   if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
   if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
   return Math.floor(diff / 86400) + 'd ago';
+}
+
+// ─── FORMAT CREATED-AT (DATE + TIME) ──────────────────
+function formatCreatedAt(dtStr) {
+  if (!dtStr) return '';
+  try {
+    const d = new Date(dtStr);
+    if (isNaN(d.getTime())) return '';
+    const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Dhaka' });
+    const timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Dhaka' });
+    return dateStr + ', ' + timeStr;
+  } catch (e) { return ''; }
+}
+
+// ─── BD LIVE CLOCK ────────────────────────────────────
+let bdClockInterval = null;
+
+function updateBDClock() {
+  const now = getBDDate();
+  let h = now.getHours();
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = now.getSeconds();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+
+  const clockHM = document.getElementById('clockHM');
+  const clockSec = document.getElementById('clockSec');
+  const clockAMPM = document.getElementById('clockAMPM');
+  const clockDateLabel = document.getElementById('clockDateLabel');
+  const clockSecRing = document.getElementById('clockSecRing');
+
+  if (clockHM) clockHM.textContent = String(h).padStart(2, '0') + ':' + m;
+  if (clockSec) clockSec.textContent = ':' + String(s).padStart(2, '0');
+  if (clockAMPM) clockAMPM.textContent = ampm;
+  if (clockDateLabel) {
+    clockDateLabel.textContent = now.toLocaleDateString('en-GB', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    }) + ' · BST (UTC+6)';
+  }
+  // Update seconds ring
+  if (clockSecRing) {
+    const circumference = 2 * Math.PI * 18; // r=18
+    const offset = circumference - (s / 60) * circumference;
+    clockSecRing.style.strokeDashoffset = offset;
+  }
+
+  // Update clock icon emoji based on hour
+  const clockIcon = document.querySelector('.bd-clock-icon');
+  if (clockIcon) {
+    const clockEmojis = ['🕛','🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚'];
+    clockIcon.textContent = clockEmojis[(h % 12)];
+  }
+}
+
+function startBDClock() {
+  updateBDClock();
+  if (bdClockInterval) clearInterval(bdClockInterval);
+  bdClockInterval = setInterval(updateBDClock, 1000);
+}
+
+function stopBDClock() {
+  if (bdClockInterval) {
+    clearInterval(bdClockInterval);
+    bdClockInterval = null;
+  }
 }
 
 // ─── HTML ESCAPE (XSS PREVENTION) ─────────────────────
@@ -2043,6 +2234,13 @@ function showScreen(screenId) {
   document.getElementById('bottomNav').style.display = isAuth ? 'none' : 'flex';
 
   currentScreen = screenId;
+
+  // Manage BD clock - only run when dashboard is visible
+  if (screenId === 'screen-dashboard') {
+    startBDClock();
+  } else {
+    stopBDClock();
+  }
 
   // Load screen data
   switch (screenId) {
@@ -2525,6 +2723,7 @@ async function loadBazaar() {
         <span>📅 ${formatDate(e.date)}</span>
         <span>👤 ${esc(names)}</span>
         ${e.editedBy ? '<span>✏️ Edited</span>' : ''}
+        ${e.createdAt ? `<span>🕐 ${formatCreatedAt(e.createdAt)}</span>` : ''}
       </div>
       ${isManagerUser ? `
         <div class="expense-actions">
@@ -2637,6 +2836,7 @@ async function loadDeposits() {
       </div>
       <div class="expense-meta">
         <span>📅 ${formatDate(d.date)}</span>
+        ${d.createdAt ? `<span>🕐 ${formatCreatedAt(d.createdAt)}</span>` : ''}
       </div>
       ${isManagerUser ? `
         <div class="expense-actions">
@@ -2834,14 +3034,14 @@ async function loadProfile() {
   const depRes = await api('getDeposits', { memberId: currentUser.id });
   const myDeps = depRes.success ? depRes.deposits : [];
   document.getElementById('myDepositHistory').innerHTML = myDeps.length
-    ? myDeps.map(d => `<div class="ledger-item"><div><div style="font-weight:500;">৳${fmt(d.amount)}</div><div class="text-xs text-muted">${esc(d.note || '')}</div></div><div class="text-xs text-muted">${formatDate(d.date)}</div></div>`).join('')
+    ? myDeps.map(d => `<div class="ledger-item"><div><div style="font-weight:500;">৳${fmt(d.amount)}</div><div class="text-xs text-muted">${esc(d.note || '')}</div></div><div class="text-xs text-muted">${formatDate(d.date)}${d.createdAt ? ' · ' + formatCreatedAt(d.createdAt) : ''}</div></div>`).join('')
     : '<div class="text-sm text-muted text-center">No deposits yet</div>';
 
   // Load meal history
   const mealRes = await api('getMeals', { memberId: currentUser.id });
   const myMeals = mealRes.success ? mealRes.meals.slice(0, 30) : [];
   document.getElementById('myMealHistory').innerHTML = myMeals.length
-    ? myMeals.map(m => `<div class="ledger-item"><div><div style="font-weight:500;">${m.mealCount} meals</div></div><div class="text-xs text-muted">${formatDate(m.date)}</div></div>`).join('')
+    ? myMeals.map(m => `<div class="ledger-item"><div><div style="font-weight:500;">${m.mealCount} meals</div></div><div class="text-xs text-muted">${formatDate(m.date)}${m.createdAt ? ' · ' + formatCreatedAt(m.createdAt) : ''}</div></div>`).join('')
     : '<div class="text-sm text-muted text-center">No meals yet</div>';
 
   // Load private ledger
@@ -2877,7 +3077,7 @@ async function loadLedger() {
     <div class="ledger-item ledger-${e.type}">
       <div>
         <div style="font-weight:500;">${esc(e.note || e.category)}</div>
-        <div class="ledger-category">${esc(e.category)} · ${formatDate(e.date)}</div>
+        <div class="ledger-category">${esc(e.category)} · ${formatDate(e.date)}${e.createdAt ? ' · ' + formatCreatedAt(e.createdAt) : ''}</div>
       </div>
       <div class="flex gap-8" style="align-items:center;">
         <div class="ledger-amount" style="font-weight:700;">${e.type === 'income' ? '+' : '-'}৳${fmt(e.amount)}</div>
