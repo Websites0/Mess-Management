@@ -607,13 +607,15 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 
 /* ─── AUTH SCREEN ──────────────────────────────────────── */
 #screen-auth {
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
   padding: 24px 20px;
   text-align: center;
+}
+#screen-auth.active {
+  display: flex;
 }
 #screen-auth.active ~ .app-header,
 #screen-auth.active ~ .bottom-nav { display: none !important; }
