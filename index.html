@@ -957,6 +957,39 @@ h4 { font-size: 0.95rem; font-weight: 600; }
       <h3>Members Overview</h3>
     </div>
     <div id="dashboardMembers"></div>
+
+    <!-- Manager Election (on Dashboard) -->
+    <div class="section-header mt-16">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <h3>🗳️ Manager Election</h3>
+        <button onclick="openModal('modal-election-info')" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--accent-cyan);padding:2px 6px;border-radius:50%;transition:all 0.2s;" title="How does election work?">ℹ️</button>
+      </div>
+    </div>
+    <!-- Current Manager display -->
+    <div class="card" id="dashElectionManagerCard" style="display:none;">
+      <div class="flex gap-12" style="align-items:center;">
+        <div class="member-avatar" id="dashManagerAvatar">M</div>
+        <div>
+          <div style="font-weight:600;" id="dashManagerName">-</div>
+          <div class="badge badge-manager">Current Manager</div>
+        </div>
+      </div>
+    </div>
+    <!-- Vote Progress (shown when votes exist) -->
+    <div id="dashElectionStatus" class="card" style="display:none;">
+      <div class="card-header">
+        <span class="card-title">📊 Vote Progress</span>
+        <span class="text-sm text-muted" id="dashVoteProgress">0/0</span>
+      </div>
+      <div id="dashVoteBars"></div>
+    </div>
+    <!-- Candidate vote list -->
+    <div class="section-header mt-16" style="margin-bottom:8px;">
+      <h4 style="font-weight:500;color:var(--text-secondary);">Cast Your Vote</h4>
+      <span class="text-xs text-muted" id="dashMajorityInfo"></span>
+    </div>
+    <div id="dashCandidateList"></div>
+    <button class="btn btn-secondary btn-block mt-16" onclick="startNewElection()" style="margin-bottom:16px;">🗳️ Start New Election</button>
   </section>
 
   <!-- ════════════════════════════════════════════════════ -->
@@ -1231,15 +1264,9 @@ h4 { font-size: 0.95rem; font-weight: 600; }
         <label class="form-label">Mess Name</label>
         <input type="text" class="form-input" id="setting-messName" placeholder="Enter mess name">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Meal Start Date</label>
-          <input type="date" class="form-input" id="setting-startDate">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Meal End Date</label>
-          <input type="date" class="form-input" id="setting-endDate">
-        </div>
+      <div class="form-group">
+        <label class="form-label">Meal Start Date</label>
+        <input type="date" class="form-input" id="setting-startDate">
       </div>
       <button class="btn btn-primary btn-sm" onclick="saveSettings()">💾 Save Settings</button>
     </div>
@@ -1535,6 +1562,10 @@ h4 { font-size: 0.95rem; font-weight: 600; }
         <option value="Other" selected>Other</option>
       </select>
     </div>
+    <div class="form-group">
+      <label class="form-label">Who went to bazaar?</label>
+      <div class="chip-group" id="bazaar-member-chips" style="max-height:140px;overflow-y:auto;padding:4px 0;"></div>
+    </div>
     <input type="hidden" id="bazaar-edit-id">
     <button class="btn btn-primary btn-block" onclick="saveBazaar()">💾 Save</button>
   </div>
@@ -1660,6 +1691,47 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 </div>
 
 <!-- Confirm Modal -->
+<!-- Election Info Modal -->
+<div class="modal-overlay" id="modal-election-info">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">ℹ️ Election কিভাবে কাজ করে?</span>
+      <button class="modal-close" onclick="closeModal('modal-election-info')">✕</button>
+    </div>
+    <div style="padding:4px 0;font-size:0.88rem;color:var(--text-secondary);line-height:1.7;">
+      <div style="margin-bottom:14px;">
+        <div style="font-weight:700;color:var(--text-primary);margin-bottom:4px;">🗳️ ভোট দেওয়া (Voting)</div>
+        <ul style="padding-left:18px;margin:0;">
+          <li>প্রতিটি member যেকোনো একজনকে ভোট দিতে পারবে</li>
+          <li>ভোট পরিবর্তন করা যাবে — শেষ ভোটটিই গণ্য হবে</li>
+          <li>নিজেকেও ভোট দেওয়া যায়</li>
+        </ul>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-weight:700;color:var(--text-primary);margin-bottom:4px;">🏆 বিজয়ী নির্বাচন (Winning)</div>
+        <ul style="padding-left:18px;margin:0;">
+          <li>মোট member এর <strong>অর্ধেকের বেশি</strong> (majority) ভোট পেলে বিজয়ী</li>
+          <li>উদাহরণ: ৬ জন member হলে ৪+ ভোট লাগবে</li>
+          <li>বিজয়ী হলে সে automatically <strong>নতুন Manager</strong> হয়ে যাবে</li>
+        </ul>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-weight:700;color:var(--text-primary);margin-bottom:4px;">🔄 নতুন Election</div>
+        <ul style="padding-left:18px;margin:0;">
+          <li>"Start New Election" বাটনে click করলে আগের সব ভোট মুছে যাবে</li>
+          <li>নতুন করে সবাই আবার ভোট দিতে পারবে</li>
+          <li>যেকোনো সময় নতুন election শুরু করা যায়</li>
+        </ul>
+      </div>
+      <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:10px 14px;font-size:0.82rem;">
+        💡 <strong>Tips:</strong> Dashboard এর নিচে সরাসরি ভোট দিতে পারবেন। Election tab এও যেতে পারবেন More মেনু থেকে।
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block mt-16" onclick="closeModal('modal-election-info')">বুঝেছি ✓</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-confirm">
   <div class="modal" style="text-align:center;">
     <div class="modal-handle"></div>
@@ -1711,7 +1783,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 <script>
 // ─── CONFIGURATION ─────────────────────────────────────
 // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
-const API_URL = 'https://script.google.com/macros/s/AKfycby9ig_ja_KzfyCKXlO1ZGbcwvH2c7YGFYscu1mtSnDA94pKW1MbyVGMqoYb6pvfo_Hl3Q/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwfrSL9LbnRJJZNlbuZxVfsi8I8Z8ggdb9U-OjZjcjsiMK3ck0l9N4-0jG1wt0yV8DKuQ/exec';
 
 // ─── STATE ─────────────────────────────────────────────
 let currentUser = null;
@@ -2191,6 +2263,62 @@ async function loadDashboard() {
       </div>
     `;
   }).join('');
+
+  // ── Dashboard Election Widget ──
+  loadDashboardElection();
+}
+
+async function loadDashboardElection() {
+  const res = await api('getElectionStatus');
+  if (!res.success) return;
+
+  const { voteCounts = {}, totalVotes = 0, totalMembers = 0, majority = 0, electionComplete, winnerId } = res;
+
+  // Current manager
+  const managerId = dashboardData?.currentManagerId;
+  const managerMember = allMembers.find(m => m.id === managerId);
+  const managerCard = document.getElementById('dashElectionManagerCard');
+  if (managerMember) {
+    managerCard.style.display = 'block';
+    document.getElementById('dashManagerAvatar').textContent = managerMember.name.charAt(0).toUpperCase();
+    document.getElementById('dashManagerName').textContent = managerMember.name;
+  } else {
+    managerCard.style.display = 'none';
+  }
+
+  // Majority info
+  document.getElementById('dashMajorityInfo').textContent = `Need ${majority} of ${totalMembers} votes`;
+  document.getElementById('dashVoteProgress').textContent = `${totalVotes}/${totalMembers} voted`;
+
+  // Vote bars
+  const electionStatusEl = document.getElementById('dashElectionStatus');
+  if (totalVotes > 0) {
+    electionStatusEl.style.display = 'block';
+    document.getElementById('dashVoteBars').innerHTML = Object.entries(voteCounts).map(([candidateId, count]) => {
+      const member = allMembers.find(m => m.id === candidateId);
+      const pct = totalMembers > 0 ? (count / totalMembers) * 100 : 0;
+      return `
+        <div style="margin-bottom:10px;">
+          <div class="flex-between text-sm"><span>${member ? esc(member.name) : 'Unknown'}</span><span>${count} votes</span></div>
+          <div class="vote-bar-bg"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    electionStatusEl.style.display = 'none';
+  }
+
+  // Candidate list
+  document.getElementById('dashCandidateList').innerHTML = allMembers.map(m => `
+    <div class="vote-card" onclick="castVote('${m.id}')">
+      <div class="member-avatar">${esc(m.name).charAt(0).toUpperCase()}</div>
+      <div class="vote-bar-wrap">
+        <div style="font-weight:600;">${esc(m.name)}</div>
+        <div class="vote-count">${voteCounts[m.id] || 0} votes</div>
+      </div>
+      <button class="btn btn-xs btn-primary">Vote</button>
+    </div>
+  `).join('');
 }
 
 // ─── MEALS ─────────────────────────────────────────────
@@ -2343,6 +2471,28 @@ function pickMealDate() {
 }
 
 // ─── BAZAAR ────────────────────────────────────────────
+function populateBazaarMemberChips(selectedIds) {
+  const container = document.getElementById('bazaar-member-chips');
+  const members = allMembers && allMembers.length ? allMembers : [];
+  if (!members.length) {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem;">Loading members...</span>';
+    return;
+  }
+  // selectedIds can be a comma-separated string or array
+  let selArr = [];
+  if (selectedIds) {
+    selArr = Array.isArray(selectedIds) ? selectedIds : selectedIds.split(',').map(s => s.trim());
+  }
+  // If no selection and not editing, pre-select current user
+  if (!selArr.length && currentUser) {
+    selArr = [currentUser.id];
+  }
+  container.innerHTML = members.map(m => {
+    const isActive = selArr.includes(m.id);
+    return `<span class="chip ${isActive ? 'active' : ''}" data-member-id="${esc(m.id)}" data-member-name="${esc(m.name)}" onclick="this.classList.toggle('active')">${esc(m.name)}</span>`;
+  }).join('');
+}
+
 async function loadBazaar() {
   const res = await api('getBazaar');
   if (!res.success) return;
@@ -2359,7 +2509,10 @@ async function loadBazaar() {
   }
 
   const isManagerUser = currentUser?.role === 'manager';
-  container.innerHTML = entries.map((e, i) => `
+  container.innerHTML = entries.map((e, i) => {
+    // Support both comma-separated and single addedByName
+    const names = e.addedByName || 'Unknown';
+    return `
     <div class="expense-item" style="animation-delay:${i * 0.04}s">
       <div class="expense-top">
         <div>
@@ -2370,29 +2523,33 @@ async function loadBazaar() {
       </div>
       <div class="expense-meta">
         <span>📅 ${formatDate(e.date)}</span>
-        <span>👤 ${esc(e.addedByName) || 'Unknown'}</span>
+        <span>👤 ${esc(names)}</span>
         ${e.editedBy ? '<span>✏️ Edited</span>' : ''}
       </div>
       ${isManagerUser ? `
         <div class="expense-actions">
-          <button class="btn btn-xs btn-secondary" onclick="editBazaar('${e.id}','${esc(e.description).replace(/'/g, "\\'")}',${e.amount},'${e.date}','${e.category}')">✏️ Edit</button>
+          <button class="btn btn-xs btn-secondary" onclick="editBazaar('${e.id}','${esc(e.description).replace(/'/g, "\\'")}',${e.amount},'${e.date}','${e.category}','${esc(e.addedBy || '')}')">✏️ Edit</button>
           <button class="btn btn-xs btn-danger" onclick="deleteBazaarEntry('${e.id}')">🗑️</button>
         </div>
       ` : ''}
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   // Set default date for new entry
   document.getElementById('bazaar-date').value = getBDDateString();
+  // Populate member chips for new entry (pre-select current user)
+  populateBazaarMemberChips(null);
 }
 
-function editBazaar(id, desc, amount, date, category) {
+function editBazaar(id, desc, amount, date, category, addedBy) {
   document.getElementById('bazaar-modal-title').textContent = 'Edit Bazaar Entry';
   document.getElementById('bazaar-edit-id').value = id;
   document.getElementById('bazaar-desc').value = desc;
   document.getElementById('bazaar-amount').value = amount;
   document.getElementById('bazaar-date').value = date;
   document.getElementById('bazaar-category').value = category;
+  // Pre-select the members who originally went to bazaar
+  populateBazaarMemberChips(addedBy || '');
   openModal('modal-bazaar');
 }
 
@@ -2403,14 +2560,23 @@ async function saveBazaar() {
   const category = document.getElementById('bazaar-category').value;
   const editId = document.getElementById('bazaar-edit-id').value;
 
+  // Collect selected member IDs and names from chips
+  const selectedChips = document.querySelectorAll('#bazaar-member-chips .chip.active');
+  const selectedIds = Array.from(selectedChips).map(c => c.dataset.memberId);
+  const selectedNames = Array.from(selectedChips).map(c => c.dataset.memberName);
+
   if (!desc || !amount) { showToast('Description and amount required', 'error'); return; }
+  if (!selectedIds.length) { showToast('Select at least one member', 'error'); return; }
+
+  const addedBy = selectedIds.join(', ');
+  const addedByName = selectedNames.join(', ');
 
   showLoading('Saving...');
   let res;
   if (editId) {
-    res = await api('editBazaar', { id: editId, description: desc, amount, date, category, requesterId: currentUser.id });
+    res = await api('editBazaar', { id: editId, description: desc, amount, date, category, addedBy, addedByName, requesterId: currentUser.id });
   } else {
-    res = await api('addBazaar', { description: desc, amount, date, category, addedBy: currentUser.id });
+    res = await api('addBazaar', { description: desc, amount, date, category, addedBy, addedByName });
   }
   hideLoading();
 
@@ -2616,6 +2782,7 @@ async function castVote(candidateId) {
       showToast('Vote cast successfully!', 'success');
     }
     loadElection();
+    loadDashboardElection();
   } else {
     showToast(res.error || 'Failed to vote', 'error');
   }
@@ -2627,6 +2794,7 @@ async function startNewElection() {
   await api('startElection');
   showToast('New election started! Everyone can vote now.', 'info');
   loadElection();
+  loadDashboardElection();
 }
 
 // ─── PROFILE ───────────────────────────────────────────
@@ -2884,7 +3052,6 @@ async function loadSettings() {
   if (res.success && res.settings) {
     document.getElementById('setting-messName').value = res.settings.messName || '';
     document.getElementById('setting-startDate').value = res.settings.mealStartDate || '';
-    document.getElementById('setting-endDate').value = res.settings.mealEndDate || '';
   }
 
   // Member list for settings
@@ -2910,12 +3077,10 @@ async function loadSettings() {
 async function saveSettings() {
   const messName = document.getElementById('setting-messName').value.trim();
   const startDate = document.getElementById('setting-startDate').value;
-  const endDate = document.getElementById('setting-endDate').value;
 
   showLoading('Saving...');
   if (messName) await api('updateSettings', { key: 'messName', value: messName, requesterId: currentUser.id });
   if (startDate) await api('updateSettings', { key: 'mealStartDate', value: startDate, requesterId: currentUser.id });
-  if (endDate) await api('updateSettings', { key: 'mealEndDate', value: endDate, requesterId: currentUser.id });
   hideLoading();
 
   showToast('Settings saved', 'success');
