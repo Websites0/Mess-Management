@@ -1173,7 +1173,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
         <h2 class="section-title">🛒 Bazaar</h2>
         <div class="section-subtitle">Grocery & expense tracking</div>
       </div>
-      <button class="btn btn-sm btn-primary" onclick="openModal('modal-bazaar')">+ Add</button>
+      <button class="btn btn-sm btn-primary" onclick="populateBazaarMemberChips(null); openModal('modal-bazaar')">+ Add</button>
     </div>
 
     <div class="card" style="padding:10px 14px;">
@@ -2692,6 +2692,15 @@ function populateBazaarMemberChips(selectedIds) {
 }
 
 async function loadBazaar() {
+  // Ensure allMembers is loaded before populating chips
+  if (!allMembers.length) {
+    await loadDashboard();
+  }
+
+  // Always set default date and populate member chips for the modal
+  document.getElementById('bazaar-date').value = getBDDateString();
+  populateBazaarMemberChips(null);
+
   const res = await api('getBazaar');
   if (!res.success) return;
 
@@ -2733,11 +2742,6 @@ async function loadBazaar() {
       ` : ''}
     </div>`;
   }).join('');
-
-  // Set default date for new entry
-  document.getElementById('bazaar-date').value = getBDDateString();
-  // Populate member chips for new entry (pre-select current user)
-  populateBazaarMemberChips(null);
 }
 
 function editBazaar(id, desc, amount, date, category, addedBy) {
