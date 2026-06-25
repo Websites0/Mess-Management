@@ -1333,18 +1333,52 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 
       <!-- Personal Meal Count -->
       <div class="card mt-16" style="padding:14px 16px;">
-        <h4 class="mb-8" style="display:flex;align-items:center;gap:8px;">🍽️ My Personal Meal Count</h4>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;">
-          <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:12px;">
-            <div class="text-xs text-muted">Total Meals</div>
-            <div style="font-weight:700;font-size:1.2rem;color:var(--accent-cyan);" id="private-my-meals">0</div>
+        <div class="flex-between mb-8">
+          <h4 style="display:flex;align-items:center;gap:8px;">🍽️ My Personal Meal Count</h4>
+          <button class="btn btn-xs btn-secondary" onclick="resetPersonalMealCount()" style="padding:3px 8px;font-size:0.7rem;">🔄 Reset</button>
+        </div>
+
+        <!-- Today's meal entry -->
+        <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:10px;">
+          <div class="text-xs text-muted" style="margin-bottom:8px;">📅 Today's Meal</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span class="text-sm" style="font-weight:500;">🌅 Breakfast (0.5)</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="btn btn-xs btn-secondary" onclick="adjustPersonalMeal('breakfast',-0.5)" style="width:28px;height:28px;padding:0;font-weight:700;">−</button>
+              <span style="font-weight:700;min-width:24px;text-align:center;" id="pm-breakfast">0</span>
+              <button class="btn btn-xs btn-primary" onclick="adjustPersonalMeal('breakfast',0.5)" style="width:28px;height:28px;padding:0;font-weight:700;">+</button>
+            </div>
           </div>
-          <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:12px;">
-            <div class="text-xs text-muted">My Cost</div>
-            <div style="font-weight:700;font-size:1.2rem;" id="private-my-cost">৳0</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span class="text-sm" style="font-weight:500;">🍛 Lunch (1)</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="btn btn-xs btn-secondary" onclick="adjustPersonalMeal('lunch',-1)" style="width:28px;height:28px;padding:0;font-weight:700;">−</button>
+              <span style="font-weight:700;min-width:24px;text-align:center;" id="pm-lunch">0</span>
+              <button class="btn btn-xs btn-primary" onclick="adjustPersonalMeal('lunch',1)" style="width:28px;height:28px;padding:0;font-weight:700;">+</button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span class="text-sm" style="font-weight:500;">🌙 Dinner (1)</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="btn btn-xs btn-secondary" onclick="adjustPersonalMeal('dinner',-1)" style="width:28px;height:28px;padding:0;font-weight:700;">−</button>
+              <span style="font-weight:700;min-width:24px;text-align:center;" id="pm-dinner">0</span>
+              <button class="btn btn-xs btn-primary" onclick="adjustPersonalMeal('dinner',1)" style="width:28px;height:28px;padding:0;font-weight:700;">+</button>
+            </div>
           </div>
         </div>
-        <div class="text-xs text-muted" style="margin-top:8px;text-align:center;">Data from current month's mess records</div>
+
+        <!-- Total counter -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;">
+          <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:12px;">
+            <div class="text-xs text-muted">Today</div>
+            <div style="font-weight:700;font-size:1.1rem;color:var(--accent-cyan);" id="pm-today-total">0</div>
+          </div>
+          <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:12px;">
+            <div class="text-xs text-muted">All Time Total</div>
+            <div style="font-weight:700;font-size:1.1rem;color:var(--accent-purple);" id="pm-all-total">0</div>
+          </div>
+        </div>
+        <div class="text-xs text-muted" style="margin-top:8px;text-align:center;">🔒 Personal tracking — saved in your mess sheet. Only you can see this.</div>
       </div>
 
       <!-- Personal Notes -->
@@ -1355,7 +1389,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
         </div>
         <textarea class="form-textarea" id="personalNotesArea" placeholder="Write your personal notes here... (Only you can see this)"
           rows="4" style="font-size:0.85rem;resize:vertical;min-height:80px;"></textarea>
-        <div class="text-xs text-muted" style="margin-top:6px;">🔒 These notes are private and saved locally on your device only.</div>
+        <div class="text-xs text-muted" style="margin-top:6px;">🔒 Notes are saved in your mess sheet. Only you can see this.</div>
       </div>
     </div>
   </section>
@@ -1958,7 +1992,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 <script>
 // ─── CONFIGURATION ─────────────────────────────────────
 // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
-const API_URL = 'https://script.google.com/macros/s/AKfycbzFi8hedcsGADqVlkeQK5gXu3DB0KJW-SnfjUt3QKmwO9XI35QPLYWyRdSxGLbUZ7DaJQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyEIIoqPR8_k9MgozTlx9LW3EJfazwRvXnVwKUf4CfKE9YQrYDB9imJSTaOJG1-cQo6Gg/exec';
 
 // ─── STATE ─────────────────────────────────────────────
 let currentUser = null;
@@ -3137,13 +3171,8 @@ async function loadProfile() {
   // Load private ledger
   loadLedger();
 
-  // Populate personal meal count in Private Ledger tab
-  if (me) {
-    const pMealsEl = document.getElementById('private-my-meals');
-    const pCostEl = document.getElementById('private-my-cost');
-    if (pMealsEl) pMealsEl.textContent = me.totalMeals;
-    if (pCostEl) pCostEl.textContent = '৳' + fmt(me.mealCost);
-  }
+  // Load personal meal counter from localStorage
+  loadPersonalMealCount();
 
   // Load personal notes from localStorage
   loadPersonalNotes();
@@ -3407,8 +3436,8 @@ function getMealLockOverlay() {
 function renderMealControl(settings) {
   const area = document.getElementById('mealControlArea');
   if (!area) return;
-  // Treat undefined/missing mealActive as active (backward compat for existing users)
-  const active = settings.mealActive !== 'false' && settings.mealActive !== false;
+  // Only treat as active when explicitly set to 'true'
+  const active = settings.mealActive === 'true' || settings.mealActive === true;
   isMealActive = active;
 
   if (active) {
@@ -3547,19 +3576,107 @@ async function deleteArchiveAction(monthId, label) {
   }
 }
 
-// ─── PERSONAL NOTES (localStorage) ─────────────────────
-function savePersonalNotes() {
+// ─── PERSONAL NOTES (Server-backed) ────────────────────
+async function savePersonalNotes() {
   if (!currentUser) return;
   const notes = document.getElementById('personalNotesArea').value;
-  localStorage.setItem('messPersonalNotes_' + currentUser.id, notes);
-  showToast('📝 Notes saved!', 'success');
+  showLoading('Saving...');
+  const res = await api('savePersonalNote', { memberId: currentUser.id, noteText: notes });
+  hideLoading();
+  if (res.success) {
+    showToast('📝 Notes saved!', 'success');
+  } else {
+    showToast(res.error || 'Failed to save', 'error');
+  }
 }
 
-function loadPersonalNotes() {
+async function loadPersonalNotes() {
   if (!currentUser) return;
-  const notes = localStorage.getItem('messPersonalNotes_' + currentUser.id) || '';
-  const area = document.getElementById('personalNotesArea');
-  if (area) area.value = notes;
+  const res = await api('getPersonalNote', { memberId: currentUser.id });
+  if (res.success) {
+    const area = document.getElementById('personalNotesArea');
+    if (area) area.value = res.noteText || '';
+  }
+}
+
+// ─── PERSONAL MEAL COUNTER (Server-backed) ─────────────
+// Local cache for today's data (to avoid lag on every +/- click)
+let _pmTodayCache = { breakfast: 0, lunch: 0, dinner: 0 };
+let _pmAllTotal = 0;
+let _pmSaveTimer = null;
+
+async function adjustPersonalMeal(type, delta) {
+  if (!currentUser) return;
+  _pmTodayCache[type] = Math.max(0, (_pmTodayCache[type] || 0) + delta);
+  renderPersonalMealUI();
+
+  // Debounce server save (save after 500ms of no changes)
+  clearTimeout(_pmSaveTimer);
+  _pmSaveTimer = setTimeout(async () => {
+    await api('savePersonalMeal', {
+      memberId: currentUser.id,
+      date: getBDDateString(),
+      breakfast: _pmTodayCache.breakfast,
+      lunch: _pmTodayCache.lunch,
+      dinner: _pmTodayCache.dinner
+    });
+    // Refresh totals from server after save
+    await loadPersonalMealCount();
+  }, 500);
+}
+
+function renderPersonalMealUI() {
+  const bEl = document.getElementById('pm-breakfast');
+  const lEl = document.getElementById('pm-lunch');
+  const dEl = document.getElementById('pm-dinner');
+  if (bEl) bEl.textContent = _pmTodayCache.breakfast || 0;
+  if (lEl) lEl.textContent = _pmTodayCache.lunch || 0;
+  if (dEl) dEl.textContent = _pmTodayCache.dinner || 0;
+
+  const todayTotal = (_pmTodayCache.breakfast || 0) + (_pmTodayCache.lunch || 0) + (_pmTodayCache.dinner || 0);
+  const todayEl = document.getElementById('pm-today-total');
+  if (todayEl) todayEl.textContent = todayTotal;
+
+  const allEl = document.getElementById('pm-all-total');
+  if (allEl) allEl.textContent = _pmAllTotal - 0 + todayTotal;
+}
+
+async function loadPersonalMealCount() {
+  if (!currentUser) return;
+  const res = await api('getPersonalMeals', { memberId: currentUser.id });
+  if (!res.success) return;
+
+  const today = getBDDateString();
+  const meals = res.meals || [];
+  _pmAllTotal = res.allTotal || 0;
+
+  // Find today's data
+  const todayEntry = meals.find(m => m.date === today);
+  _pmTodayCache = todayEntry
+    ? { breakfast: todayEntry.breakfast, lunch: todayEntry.lunch, dinner: todayEntry.dinner }
+    : { breakfast: 0, lunch: 0, dinner: 0 };
+
+  renderPersonalMealUI();
+
+  // Update all-time total correctly
+  const allEl = document.getElementById('pm-all-total');
+  if (allEl) allEl.textContent = _pmAllTotal;
+}
+
+async function resetPersonalMealCount() {
+  const ok = await showConfirm('Reset Meal Count', 'Are you sure? This will delete all your personal meal tracking data from the server.', '🔄');
+  if (!ok) return;
+  showLoading('Deleting...');
+  const res = await api('deletePersonalMeals', { memberId: currentUser.id });
+  hideLoading();
+  if (res.success) {
+    _pmTodayCache = { breakfast: 0, lunch: 0, dinner: 0 };
+    _pmAllTotal = 0;
+    renderPersonalMealUI();
+    showToast('🔄 Meal count reset!', 'success');
+  } else {
+    showToast(res.error || 'Failed', 'error');
+  }
 }
 
 async function viewPastMonth(monthId, label) {
