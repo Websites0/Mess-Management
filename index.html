@@ -1101,7 +1101,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
     <div class="section-header mt-16">
       <div style="display:flex;align-items:center;gap:8px;">
         <h3>🗳️ Manager Election</h3>
-        <button onclick="openModal('modal-election-info')" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--accent-cyan);padding:2px 6px;border-radius:50%;transition:all 0.2s;" title="How does election work?">ℹ️</button>
+        <button onclick="openModal('modal-election-info')" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--accent-cyan);padding:2px 6px;border-radius:50%;transition:all 0.2s;" title="How does election work?">❓</button>
       </div>
     </div>
     <!-- Current Manager display -->
@@ -1330,6 +1330,33 @@ h4 { font-size: 0.95rem; font-weight: 600; }
         <button class="btn btn-sm btn-primary" onclick="openModal('modal-ledger')">+ Add</button>
       </div>
       <div id="ledgerEntries"></div>
+
+      <!-- Personal Meal Count -->
+      <div class="card mt-16" style="padding:14px 16px;">
+        <h4 class="mb-8" style="display:flex;align-items:center;gap:8px;">🍽️ My Personal Meal Count</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;">
+          <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:12px;">
+            <div class="text-xs text-muted">Total Meals</div>
+            <div style="font-weight:700;font-size:1.2rem;color:var(--accent-cyan);" id="private-my-meals">0</div>
+          </div>
+          <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:12px;">
+            <div class="text-xs text-muted">My Cost</div>
+            <div style="font-weight:700;font-size:1.2rem;" id="private-my-cost">৳0</div>
+          </div>
+        </div>
+        <div class="text-xs text-muted" style="margin-top:8px;text-align:center;">Data from current month's mess records</div>
+      </div>
+
+      <!-- Personal Notes -->
+      <div class="card mt-16" style="padding:14px 16px;">
+        <div class="flex-between mb-8">
+          <h4 style="display:flex;align-items:center;gap:8px;">📝 Personal Notes</h4>
+          <button class="btn btn-xs btn-primary" onclick="savePersonalNotes()" style="padding:4px 12px;">💾 Save</button>
+        </div>
+        <textarea class="form-textarea" id="personalNotesArea" placeholder="Write your personal notes here... (Only you can see this)"
+          rows="4" style="font-size:0.85rem;resize:vertical;min-height:80px;"></textarea>
+        <div class="text-xs text-muted" style="margin-top:6px;">🔒 These notes are private and saved locally on your device only.</div>
+      </div>
     </div>
   </section>
 
@@ -1399,6 +1426,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
     <!-- Mess Settings (Manager Only) -->
     <div class="card manager-only">
       <h4 class="mb-8">🏠 Mess Settings</h4>
+      <p class="text-xs text-muted" style="margin-bottom:10px;line-height:1.5;">মেসের নাম পরিবর্তন করুন এবং Meal চালু/বন্ধ করুন।<br>Change mess name and control meal start/stop.</p>
       <div class="form-group">
         <label class="form-label">Mess Name</label>
         <input type="text" class="form-input" id="setting-messName" placeholder="Enter mess name">
@@ -1417,6 +1445,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
     <!-- Members Management (Manager Only) -->
     <div class="card manager-only">
       <h4 class="mb-8">👥 Members</h4>
+      <p class="text-xs text-muted" style="margin-bottom:10px;line-height:1.5;">মেসের সকল সদস্যদের তালিকা দেখুন।<br>View all mess members and their roles.</p>
       <div id="settingsMemberList"></div>
     </div>
 
@@ -1430,18 +1459,21 @@ h4 { font-size: 0.95rem; font-weight: 600; }
     <!-- Export -->
     <div class="card">
       <h4 class="mb-8">📤 Export Summary</h4>
+      <p class="text-xs text-muted" style="margin-bottom:10px;line-height:1.5;">বর্তমান মাসের সামারি কপি করুন।<br>Copy or share current month's summary report.</p>
       <button class="btn btn-secondary btn-block" onclick="exportCurrentMonth()">📋 Export Current Month</button>
     </div>
 
     <!-- Past Months (All Members) -->
     <div class="card">
       <h4 class="mb-8">📚 Past Months</h4>
+      <p class="text-xs text-muted" style="margin-bottom:10px;line-height:1.5;">আগের মাসগুলোর সব ডাটা (meals, bazaar, deposits) দেখুন।<br>View archived data from previous months.</p>
       <div id="pastMonthsList"></div>
     </div>
 
     <!-- Data Backup -->
     <div class="card">
       <h4 class="mb-8">💾 Data</h4>
+      <p class="text-xs text-muted" style="margin-bottom:10px;line-height:1.5;">Election ও Cleaning Log দেখুন ও পরিচালনা করুন।<br>Access manager election & cleaning log features.</p>
       <div class="flex gap-8">
         <button class="btn btn-secondary btn-sm flex-1" onclick="showScreen('screen-election')">🗳️ Election</button>
         <button class="btn btn-secondary btn-sm flex-1" onclick="showScreen('screen-cleaning')">🧹 Cleaning</button>
@@ -1926,7 +1958,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 <script>
 // ─── CONFIGURATION ─────────────────────────────────────
 // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
-const API_URL = 'https://script.google.com/macros/s/AKfycbyn1NCR4QbXajEAEtTI6WqWt57tY5Y2-H0QtjaLuNdkvA_F6wiPA5_s-snQdkXSlnED5g/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzFi8hedcsGADqVlkeQK5gXu3DB0KJW-SnfjUt3QKmwO9XI35QPLYWyRdSxGLbUZ7DaJQ/exec';
 
 // ─── STATE ─────────────────────────────────────────────
 let currentUser = null;
@@ -3104,6 +3136,17 @@ async function loadProfile() {
 
   // Load private ledger
   loadLedger();
+
+  // Populate personal meal count in Private Ledger tab
+  if (me) {
+    const pMealsEl = document.getElementById('private-my-meals');
+    const pCostEl = document.getElementById('private-my-cost');
+    if (pMealsEl) pMealsEl.textContent = me.totalMeals;
+    if (pCostEl) pCostEl.textContent = '৳' + fmt(me.mealCost);
+  }
+
+  // Load personal notes from localStorage
+  loadPersonalNotes();
 }
 
 function switchProfileTab(tab) {
@@ -3408,9 +3451,8 @@ async function startMealAction() {
     isMealActive = true;
     showToast('🟢 Meals started! All features unlocked.', 'success');
     loadSettings();
-    // Update dashboard banner
-    const lockBanner = document.getElementById('mealLockBanner');
-    if (lockBanner) lockBanner.style.display = 'none';
+    // Refresh dashboard data so isMealActive is synced everywhere
+    await loadDashboard();
   } else {
     showToast(res.error || 'Failed to start meals', 'error');
   }
@@ -3426,9 +3468,8 @@ async function stopMealAction() {
     isMealActive = false;
     showToast('🔴 Meals stopped. All features locked.', 'info');
     loadSettings();
-    // Update dashboard banner
-    const lockBanner = document.getElementById('mealLockBanner');
-    if (lockBanner) lockBanner.style.display = 'block';
+    // Refresh dashboard data so isMealActive is synced everywhere
+    await loadDashboard();
   } else {
     showToast(res.error || 'Failed to stop meals', 'error');
   }
@@ -3473,9 +3514,11 @@ async function loadPastMonths() {
     return;
   }
 
+  const isManagerUser = currentUser && currentUser.role === 'manager';
+
   container.innerHTML = months.map(m => `
-    <div class="archive-card" onclick="viewPastMonth('${m.monthId}', '${esc(m.monthLabel)}')">
-      <div class="flex-between">
+    <div class="archive-card" style="position:relative;">
+      <div class="flex-between" onclick="viewPastMonth('${m.monthId}', '${esc(m.monthLabel)}')" style="cursor:pointer;">
         <div>
           <div style="font-weight:600;">${esc(m.monthLabel)}</div>
           <div class="text-xs text-muted">${formatDate(m.startDate)} → ${formatDate(m.endDate)}</div>
@@ -3485,8 +3528,38 @@ async function loadPastMonths() {
           <div class="text-xs text-muted">${m.totalMeals} meals</div>
         </div>
       </div>
+      ${isManagerUser ? `<button class="btn btn-xs btn-danger" onclick="event.stopPropagation();deleteArchiveAction('${m.monthId}', '${esc(m.monthLabel)}')" style="margin-top:8px;padding:4px 10px;font-size:0.72rem;width:100%;opacity:0.85;">🗑️ Delete Backup</button>` : ''}
     </div>
   `).join('');
+}
+
+async function deleteArchiveAction(monthId, label) {
+  const ok = await showConfirm('Delete Backup', `Are you sure you want to delete "${label}" backup?\n\nThis will permanently remove all archived data (Meals, Bazaar, Deposits, Cleaning) for this month. This cannot be undone.`, '🗑️');
+  if (!ok) return;
+  showLoading('Deleting backup...');
+  const res = await api('deleteArchive', { monthId, requesterId: currentUser.id });
+  hideLoading();
+  if (res.success) {
+    showToast('🗑️ Backup deleted successfully.', 'success');
+    loadPastMonths();
+  } else {
+    showToast(res.error || 'Failed to delete backup', 'error');
+  }
+}
+
+// ─── PERSONAL NOTES (localStorage) ─────────────────────
+function savePersonalNotes() {
+  if (!currentUser) return;
+  const notes = document.getElementById('personalNotesArea').value;
+  localStorage.setItem('messPersonalNotes_' + currentUser.id, notes);
+  showToast('📝 Notes saved!', 'success');
+}
+
+function loadPersonalNotes() {
+  if (!currentUser) return;
+  const notes = localStorage.getItem('messPersonalNotes_' + currentUser.id) || '';
+  const area = document.getElementById('personalNotesArea');
+  if (area) area.value = notes;
 }
 
 async function viewPastMonth(monthId, label) {
