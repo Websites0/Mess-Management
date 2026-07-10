@@ -64,7 +64,7 @@ Follow these steps to get a local copy up and running.
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/your-username/Mess-Management.git
+git clone https://github.com/Websites0/Mess-Management.git
 cd Mess-Management
 ```
 
@@ -139,10 +139,9 @@ Distributed under the MIT License. See `LICENSE` for more information. *(If a li
 
 ## 📬 Contact / Maintainer
 
-**Your Name / Organization**
-- Email: [your-email@example.com](mailto:your-email@example.com)
-- GitHub: [@your-username](https://github.com/your-username)
-- Project Link: [https://github.com/your-username/Mess-Management](https://github.com/your-username/Mess-Management)
+**Websites0**
+- GitHub: [@Websites0](https://github.com/Websites0)
+- Project Link: [https://github.com/Websites0/Mess-Management](https://github.com/Websites0/Mess-Management)
 
 ---
 *Made with ❤️ for student messes everywhere.*
